@@ -10,7 +10,9 @@ const todos = [{
     text: 'First test todo'
 }, {
     _id: new ObjectID(),
-    text: 'Second test todo'
+    text: 'Second test todo',
+    completed: true,
+    completedAt: 1234
 }]
 
 beforeEach((done) => {
@@ -87,64 +89,95 @@ describe('GET /todos/:id', () => {
     it('Should return 404 if Todo not found', (done) => {
         var id = new ObjectID()
         request(app)
-        .get(`/todos/${id.toHexString()}`)
-        .expect(404)
-        .expect((res) => {
-            expect(res.body.error).toBe('Todo not found')
-        })
-        .end(done);
+            .get(`/todos/${id.toHexString()}`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.error).toBe('Todo not found')
+            })
+            .end(done);
     });
 
     it('Should return 404 if non-object ID', (done) => {
         request(app)
-        .get(`/todos/123`)
-        .expect(404)
-        .expect((res) => {
-            expect(res.body.error).toBe('ID is not valid')
-        })
-        .end(done);
+            .get(`/todos/123`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.error).toBe('ID is not valid')
+            })
+            .end(done);
     });
 })
 
-describe('DELETE /todos/:id', () =>{
-    it('Should delete a todo', (done) =>{
+describe('DELETE /todos/:id', () => {
+    it('Should delete a todo', (done) => {
         var _id = todos[0]._id.toHexString();
 
         request(app)
-        .delete(`/todos/${_id}`)
-        .expect(200)
-        .expect((res) => { 
-            expect(res.body.todo._id).toBe(_id)
-        })
-        .end((err, res) => {
-            if (err) return done(err);
+            .delete(`/todos/${_id}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo._id).toBe(_id)
+            })
+            .end((err, res) => {
+                if (err) return done(err);
 
-            Todo.findById(_id).then((todo) =>{
-                expect(todo).toNotExist();
-                done();
-            }).catch((e) => done(e));
-        });
+                Todo.findById(_id).then((todo) => {
+                    expect(todo).toNotExist();
+                    done();
+                }).catch((e) => done(e));
+            });
     });
 
     it('Should return 404 if todo not found', (done) => {
         var _id = new ObjectID();
 
         request(app)
-        .delete(`/todos/${_id}`)
-        .expect(404)
-        .expect((res) => {
-            expect(res.body.error).toBe('Todo not found, couldnt be deleted')
-        })
-        .end(done);
+            .delete(`/todos/${_id}`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.error).toBe('Todo not found, couldnt be deleted')
+            })
+            .end(done);
     });
 
     it('Should return 404 if ObjectID is invalid', (done) => {
         request(app)
-        .delete(`/todos/123`)
-        .expect(404)
+            .delete(`/todos/123`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.error).toBe('ID is not valid')
+            })
+            .end(done);
+    });
+});
+
+describe('PATCH /todos/:id', () => {
+    it('Should updated the todo', (done) => {
+        var id = todos[0]._id.toHexString();
+
+        request(app)
+        .patch(`/todos/${id}`)
+        .send({text: "Eu mudei", completed: true})
+        .expect(200)
         .expect((res) => {
-            expect(res.body.error).toBe('ID is not valid')
+            expect(res.body.todo.text).toBe('Eu mudei')
+            expect(res.body.todo.completed).toBe(true)
+            expect(res.body.todo.completedAt).toBeA('number')
         })
         .end(done);
     });
+
+    it('Should clear completed when todo is not completed', (done) => {
+        var id = todos[1]._id.toHexString();
+
+        request(app)
+        .patch(`/todos/${id}`)
+        .send({completed: false})
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.todo.completedAt).toNotExist()
+        })
+        .end(done);
+    });
+
 })
