@@ -8,6 +8,7 @@ const _ = require('lodash');
 const {mongoose} = require('./db/mongoose')
 const {Todo} = require('./models/todo');
 const {User} = require('./models/user');
+const {authenticate} = require('./middleware/authenticate');
 
 const app = express();
 
@@ -92,14 +93,21 @@ app.post('/users', (req, res) => {
     var user = new User(body);
 
     user.save().then(() => {
+        //retorna um token que vai ser usado no proximo .then() 
         return user.generateAuthToken();
     }).then((token) => {
-        res.header('x-auth', token).send(user)
+        res.header('x-auth', token).send(user);
     }).catch((e) => {
         res.status(400).send(e);
     });
 
-})
+});
+
+
+
+app.get('/users/me', authenticate, (req, res) => {
+    res.send(req.user);
+});
 
 app.listen(port, () => console.log(`Server up on port ${port}`))
 
