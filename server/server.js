@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 const {mongoose} = require('./db/mongoose')
 const {Todo} = require('./models/todo');
@@ -103,6 +104,18 @@ app.post('/users', (req, res) => {
 
 });
 
+// POST /users/login {email , password}
+
+app.post('/users/login', (req, res) => {
+    var body = _.pick(req.body, ['email'], ['password']);
+
+    User.findByCredentials(body.email, body.password).then((user) => {
+        return user.generateAuthToken().then((token) => {
+            res.header('x-auth', token).send(user);            
+        });
+    }).catch((e) => res.status(400).send(e));
+
+});
 
 
 app.get('/users/me', authenticate, (req, res) => {
