@@ -52,6 +52,15 @@ UserSchema.methods.generateAuthToken = function () {
     });
 };
 
+UserSchema.methods.removeToken = function (token) {
+    var user = this;
+    return user.update({
+        $pull: {
+            tokens: {token}
+        }
+    });
+}
+
 //Este metodo é usado no UserSchema e recebe um token, confirma se é valido e retorna o objeto usuário correspondente a esse token. Se der merda ele retorna uma 'promessa rejeitada' 
 UserSchema.statics.findByToken = function (token) {
     var User = this;
