@@ -43,7 +43,7 @@ UserSchema.methods.toJSON = function () {
 //Retona o token que vai ser usado na header do usuário quando esse for salvado
 UserSchema.methods.generateAuthToken = function () {
     var acess = 'auth';
-    var token = jwt.sign({ _id: this._id.toHexString(), acess }, 'abc123').toString();
+    var token = jwt.sign({ _id: this._id.toHexString(), acess }, process.env.JWT_SECRET).toString();
 
     this.tokens.push({ acess, token });
 
@@ -67,7 +67,7 @@ UserSchema.statics.findByToken = function (token) {
     var decoded;
 
     try {
-        decoded = jwt.verify(token, 'abc123')
+        decoded = jwt.verify(token, process.env.JWT_SECRET)
     } catch (e) {
         return Promise.reject();
     }
